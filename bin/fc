@@ -40,17 +40,12 @@ if ($name === 'filename.txt' && !is_file($name)) {
 }
 
 // init global variables
-$data = [];
-$count = 0;
-$sum = 0;
+$data = []; $count = 0; $sum = 0;
 
 if ($argc === 3) {
     $key = $argv[2];
 
-    $increase = 1;
-    $decrease = 1;
-    $accIncr = 1;
-    $accDecr = 1;
+    $increase = 1; $decrease = 1; $accIncr = 1; $accDecr = 1;
 }
 
 // single pass calculation
@@ -60,34 +55,35 @@ while ($line = fgets($file)) {
     if (!is_numeric($clearLine)) {
         continue;
     } else {
-        $num = intval($clearLine);
+        $num = floatval($clearLine);
         $data[] = $num;
 
         $sum += $num;
         $count++;
     }
+    
+    if (!isset($key)) {
+        continue;
+    }
     // sequence counting
-    if (isset($key)) {
-        if (!isset($prev)) {
-            $prev = $num;
-        } else {
-            if ($num > $prev) {
-                $accIncr++;
-                $accDecr = 1;
-            } else {
-                $accDecr++;
-                $accIncr = 1;
-            }
-
-            if ($accIncr > $increase) {
-                $increase = $accIncr;
-            }
-            if ($accDecr > $decrease) {
-                $decrease = $accDecr;
-            }
-        }
+    if (!isset($prev)) {
         $prev = $num;
     }
+    if ($num > $prev) {
+        $accIncr++;
+        $accDecr = 1;
+    } else {
+        $accDecr++;
+        $accIncr = 1;
+    }
+
+    if ($accIncr > $increase) {
+        $increase = $accIncr;
+    }
+    if ($accDecr > $decrease) {
+        $decrease = $accDecr;
+    }
+    $prev = $num;
 }
 
 if (!feof($file)) {
