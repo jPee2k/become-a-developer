@@ -3,140 +3,121 @@
 
 namespace BecomeADeveloper\fc;
 
-// settings
-set_time_limit(0);
+// enable timer
+$startTimer = microtime(true);
+
+if ($argc !== 2 && $argc !== 3) {
+    echo "Please, enter command: ./fc filename.txt" . PHP_EOL;
+    echo "Use the -S key to enable sequence counting" . PHP_EOL;
+    exit(1);
+}
+
+// filename
+$name = $argv[1];
+
+// include data file
+$require = __DIR__ . '/../src/' . $name;
+
+if (!is_file($require)) {
+    echo "File does not exist. Path to file: BECOME-A-DEVELOPER/src/" . PHP_EOL;
+    exit(2);
+}
+
+if (!$file = fopen($require, 'rb')) {
+    echo "Error opening file for reading" . PHP_EOL;
+    fclose($file);
+    exit(3);
+}
+
+if (isset($argv[2]) && ($argv[2] != '-S' && $argv[2] != '-s')) {
+    echo "Wrong key! Try ./fc filename.txt -S" . PHP_EOL;
+    exit(5);
+}
+
+if ($name === 'filename.txt' && !is_file($name)) {
+    echo "Replace 'filename.txt' with the name of the file to be connected!!!" . PHP_EOL;
+    exit(6);
+}
 
 // init global variables
-$startTimer = microtime(true);
-$storage = ['longest' => 1, 'acc' => 1];
+$data = [];
 $count = 0;
 $sum = 0;
 
-function main($argc, $argv)
-{
-    if ($argc !== 2) {
-        echo "Please, enter command: ./fc 'filename.txt'\n";
-        return 1;
-    }
-    
-    // filename
-    $name = $argv[1];
-    
-    // include data file
-    $require = __DIR__ . '/../src/' . $name;
-    
-    if (!is_file($require)) {
-        echo "File does not exist. Path to file: 'BECOME-A-DEVELOPER/src/'\n";
-        return 2;
-    }
-    
-    if (!$file = fopen($require, 'rb')) {
-        echo "Error opening file for reading\n";
-        fclose($file);
-        return 3;
-    }
+if ($argc === 3) {
+    $key = $argv[2];
 
-    if ($file) {
-        $data = [];
-        global $count;
-        global $sum;
-        global $storage;
-
-        // single pass calculation
-        while ($line = fgets($file)) {
-            // data filtering
-            $clearLine = trim($line);
-            if (!is_numeric($clearLine)) {
-                continue;
-            } else {
-                $num = intval($clearLine);
-                $data[] = $num;
-
-                $sum += $num;
-                $count++;
-            }
-            // sequence counting
-            if (!isset($prev)) {
-                $prev = $num;
-            }
-            $longest = calculateMaxSeq($prev, $num, $storage);
-            $prev = $num;
-        }
-
-        if (!feof($file)) {
-            echo "Error reading from file\n";
-            fclose($file);
-            return 4;
-        }
-    }
-    
-    fclose($file);
-    
-    sort($data);
-
-    printResult($data, $longest);
-    return 0;
+    $increase = 1;
+    $decrease = 1;
+    $accIncr = 1;
+    $accDecr = 1;
 }
 
-function getMax($data)
-{
-    global $count;
-    return $data[$count - 1];
-}
-
-function getMin($data)
-{
-    return $data[0];
-}
-
-function calculateMedian($data)
-{
-    global $count;
-    $middle = $count / 2;
-
-    return ($count % 2) ? $data[ceil($middle) - 1] : ($data[$middle] + $data[$middle - 1]) / 2;
-}
-
-function calculateAverage($data)
-{
-    global $count;
-    global $sum;
-    
-    return $sum / $count;
-}
-
-function calculateMaxSeq($prev, $curr, &$storage)
-{
-    if ($curr > $prev) {
-        $storage['acc']++;
+// single pass calculation
+while ($line = fgets($file)) {
+    // data filtering
+    $clearLine = trim($line);
+    if (!is_numeric($clearLine)) {
+        continue;
     } else {
-        $storage['acc'] = 1;
-    }
-    
-    if ($storage['acc'] > $storage['longest']) {
-        $storage['longest'] = $storage['acc'];
-    }
+        $num = intval($clearLine);
+        $data[] = $num;
 
-    return $storage['longest'];
+        $sum += $num;
+        $count++;
+    }
+    // sequence counting
+    if (isset($key)) {
+        if (!isset($prev)) {
+            $prev = $num;
+        } else {
+            if ($num > $prev) {
+                $accIncr++;
+                $accDecr = 1;
+            } else {
+                $accDecr++;
+                $accIncr = 1;
+            }
+
+            if ($accIncr > $increase) {
+                $increase = $accIncr;
+            }
+            if ($accDecr > $decrease) {
+                $decrease = $accDecr;
+            }
+        }
+        $prev = $num;
+    }
 }
 
-function timer()
+if (!feof($file)) {
+    echo "Error reading from file" . PHP_EOL;
+    fclose($file);
+    exit(4);
+}
+
+fclose($file);
+sort($data);
+
+// calculateMedian
+$middle = $count / 2;
+$median = ($count % 2) ? $data[ceil($middle) - 1] : ($data[$middle] + $data[$middle - 1]) / 2;
+
+// calculateAverage
+$average = $sum / $count;
+
+echo "Max: {$data[$count - 1]}" . PHP_EOL;
+echo "Min: {$data[0]}" . PHP_EOL;
+echo "Median: {$median}" . PHP_EOL;
+echo "Average: {$average}" . PHP_EOL;
+if (isset($key)) {
+    echo "Largest increasing sequence: {$increase}" . PHP_EOL;
+    echo "Largest decreasing sequence: {$decrease}" . PHP_EOL;
+}
+echo "Execution time: " . timer($startTimer) . " sec" . PHP_EOL;
+
+function timer($startTimer)
 {
-    global $startTimer;
     $stopTimer = microtime(true);
     return $stopTimer - $startTimer;
 }
-
-function printResult($data, $longest)
-{
-    print_r("Max: " . getMax($data) . "\n");
-    print_r("Min: " . getMin($data) . "\n");
-    print_r("Median: " . calculateMedian($data) . "\n");
-    print_r("Average: " . calculateAverage($data) . "\n");
-    print_r("Max sequence: " . $longest . "\n");
-    //print_r("Min sequence: " . calculateMinSeq($prev, $curr) . "\n");
-
-    print_r("Execution time: " . timer() . " sec\n");
-}
-
-main($argc, $argv);
