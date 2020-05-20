@@ -20,22 +20,27 @@ function main($argc, $argv)
         echo "Please, enter command: ./cc 'filename.txt'" . PHP_EOL;
         return 1;
     }
-    
+
     // filename
     $name = $argv[1];
-    
+
     // include data file
     $require = __DIR__ . '/../src/' . $name;
-    
+
     if (!is_file($require)) {
         echo "File does not exist. Path to file: 'BECOME-A-DEVELOPER/src/'" . PHP_EOL;
         return 2;
     }
-    
+
     if (!$file = fopen($require, 'rb')) {
         echo "Error opening file for reading" . PHP_EOL;
         fclose($file);
         return 3;
+    }
+
+    if ($name === 'filename.txt' && !is_file($name)) {
+        echo "Replace 'filename.txt' with the name of the file to be connected!!!" . PHP_EOL;
+        return 5;
     }
 
     $data = [];
@@ -67,7 +72,7 @@ function main($argc, $argv)
         fclose($file);
         return 4;
     }
-    
+
     fclose($file);
     sort($data);
 
@@ -112,7 +117,7 @@ function calculateAverage()
     global $storage;
     $sum = getSum($storage);
     $count = getCount($storage);
-    
+
     return $sum / $count;
 }
 
@@ -172,7 +177,7 @@ function calculateMaxSeq($prevLine, $currLine, &$storage)
     }
 
     $incr = getIncrease($storage);
-        if ($accIncr > $incr) {
+    if ($accIncr > $incr) {
         setIncrease($storage, $accIncr);
     }
     $decr = getDecrease($storage);
