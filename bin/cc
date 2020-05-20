@@ -17,7 +17,7 @@ $storage = [
 function main($argc, $argv)
 {
     if ($argc !== 2) {
-        echo "Please, enter command: ./exec 'filename.txt'" . PHP_EOL;
+        echo "Please, enter command: ./cc 'filename.txt'" . PHP_EOL;
         return 1;
     }
     
