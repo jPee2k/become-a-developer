@@ -1,0 +1,202 @@
+#!/usr/bin/env php
+<?php
+
+namespace BecomeADeveloper\cc;
+
+// settings
+set_time_limit(0);
+
+// init global variables
+$startTimer = microtime(true);
+$storage = [
+    'calculate' => ['count' => 0, 'sum' => 0],
+    'sequence' => ['increase' => 1, 'decrease' => 1],
+    'accum' => ['increase' => 1, 'decrease' => 1],
+];
+
+function main($argc, $argv)
+{
+    if ($argc !== 2) {
+        echo "Please, enter command: ./exec 'filename.txt'" . PHP_EOL;
+        return 1;
+    }
+    
+    // filename
+    $name = $argv[1];
+    
+    // include data file
+    $require = __DIR__ . '/../src/' . $name;
+    
+    if (!is_file($require)) {
+        echo "File does not exist. Path to file: 'BECOME-A-DEVELOPER/src/'" . PHP_EOL;
+        return 2;
+    }
+    
+    if (!$file = fopen($require, 'rb')) {
+        echo "Error opening file for reading" . PHP_EOL;
+        fclose($file);
+        return 3;
+    }
+
+    $data = [];
+    global $storage;
+
+    // single pass calculation
+    while ($line = fgets($file)) {
+        // data filtering
+        $clearLine = trim($line);
+        if (!is_numeric($clearLine)) {
+            continue;
+        } else {
+            $num = intval($clearLine);
+            $data[] = $num;
+
+            $storage['calculate']['sum'] += $num;
+            $storage['calculate']['count']++;
+        }
+        // sequence counting
+        if (!isset($prevLine)) {
+            $prevLine = $num;
+        }
+        calculateMaxSeq($prevLine, $num, $storage);
+        $prevLine = $num;
+    }
+
+    if (!feof($file)) {
+        echo "Error reading from file" . PHP_EOL;
+        fclose($file);
+        return 4;
+    }
+    
+    fclose($file);
+    sort($data);
+
+    printResult($data, $storage);
+    return 0;
+}
+
+function getMax($data)
+{
+    global $storage;
+    $count = getCount($storage);
+    return $data[$count - 1];
+}
+
+function getMin($data)
+{
+    return $data[0];
+}
+
+function getCount($storage)
+{
+    return $storage['calculate']['count'];
+}
+
+function getSum($storage)
+{
+    return $storage['calculate']['sum'];
+}
+
+function calculateMedian($data)
+{
+    global $storage;
+    $count = getCount($storage);
+
+    $middle = $count / 2;
+
+    return ($count % 2) ? $data[ceil($middle) - 1] : ($data[$middle] + $data[$middle - 1]) / 2;
+}
+
+function calculateAverage()
+{
+    global $storage;
+    $sum = getSum($storage);
+    $count = getCount($storage);
+    
+    return $sum / $count;
+}
+
+function getIncrease($storage)
+{
+    return $storage['sequence']['increase'];
+}
+
+function getDecrease($storage)
+{
+    return $storage['sequence']['decrease'];
+}
+
+function setIncrease(&$storage, $value)
+{
+    $storage['sequence']['increase'] = $value;
+}
+
+function setDecrease(&$storage, $value)
+{
+    $storage['sequence']['decrease'] = $value;
+}
+
+function getAccumIncrease($storage)
+{
+    return $storage['accum']['increase'];
+}
+
+function getAccumDecrease($storage)
+{
+    return $storage['accum']['decrease'];
+}
+
+function setAccumIncrease(&$storage, $value)
+{
+    $storage['accum']['increase'] = $value;
+}
+
+function setAccumDecrease(&$storage, $value)
+{
+    $storage['accum']['decrease'] = $value;
+}
+
+function calculateMaxSeq($prevLine, $currLine, &$storage)
+{
+    $accIncr = getAccumIncrease($storage);
+    $accDecr = getAccumDecrease($storage);
+
+    if ($currLine > $prevLine) {
+        $accIncr++;
+        setAccumIncrease($storage, $accIncr);
+        setAccumDecrease($storage, 1);
+    } else {
+        $accDecr++;
+        setAccumDecrease($storage, $accDecr);
+        setAccumIncrease($storage, 1);
+    }
+
+    $incr = getIncrease($storage);
+        if ($accIncr > $incr) {
+        setIncrease($storage, $accIncr);
+    }
+    $decr = getDecrease($storage);
+    if ($accDecr > $decr) {
+        setDecrease($storage, $accDecr);
+    }
+}
+
+function timer()
+{
+    global $startTimer;
+    $stopTimer = microtime(true);
+    return $stopTimer - $startTimer;
+}
+
+function printResult($data, $storage)
+{
+    print_r("Max: " . getMax($data) . PHP_EOL);
+    print_r("Min: " . getMin($data) . PHP_EOL);
+    print_r("Median: " . calculateMedian($data) . PHP_EOL);
+    print_r("Average: " . calculateAverage() . PHP_EOL);
+    print_r("Largest increasing sequence: " . getIncrease($storage) . PHP_EOL);
+    print_r("Largest decreasing sequence: " . getDecrease($storage) . PHP_EOL);
+    print_r("Execution time: " . timer() . " sec" . PHP_EOL);
+}
+
+main($argc, $argv);
