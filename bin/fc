@@ -15,7 +15,7 @@ $sum = 0;
 function main($argc, $argv)
 {
     if ($argc !== 2) {
-        echo "Please, enter command: ./exec 'filename.txt'\n";
+        echo "Please, enter command: ./fc 'filename.txt'\n";
         return 1;
     }
     
